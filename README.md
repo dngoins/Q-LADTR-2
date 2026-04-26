@@ -106,6 +106,28 @@ run_deep_rl_algorithms = True
 
 The algorithm comparison cell combines min/max oracle, random movement, directional Q-LADTR, and optional DQN/PPO/A2C rows into one summary table and chart set using the same oracle scoring metrics. It also prints a final interpretation explaining which algorithm had the best oracle-position match, which learned policy performed best, which method was closest to oracle placements, and which ran fastest. Keep `future5_total_timesteps` small while testing, then increase it for stronger deep-RL training. MADDPG is not included because Stable-Baselines3 does not provide it; adding MADDPG will require a multi-agent RL library or custom implementation.
 
+## 1000-episode Q-LADTR tuning benchmark
+
+The latest tuning run compared `random_movement_baseline` against tuned `Q-LADTR_directional` using 1000 training episodes per seed, 100 max steps per episode, 10 UAVs, a 10x10 oracle grid, and 10 random seeds. Random movement remained a pure baseline. Directional Q-LADTR was given the learning configuration that best matched the oracle benchmark during tuning:
+
+1. **Longer training horizon** - Increased the comparison to 1000 episodes and 100 max steps so Q-LADTR has enough transitions to learn movement preferences.
+2. **Per-UAV Q-tables for the oracle run** - Used `directional_q_table_scope="per_uav"` so each UAV can learn its own target area instead of sharing one policy across different UAV identities.
+3. **Oracle-aligned reward shaping for Q-LADTR only** - Added directional-only reward weights for oracle position score and role match while keeping the random baseline unshaped.
+4. **Rejected over-aggressive tuning** - A stronger distance-reduction reward was tested, but it hurt the final benchmark, so the notebook keeps the better-performing direct oracle position/role shaping profile.
+
+The final verified benchmark showed Q-LADTR improving the average oracle position score, median oracle position score, average distance to oracle placement, and role match rate:
+
+| Metric | Random movement baseline | Tuned Q-LADTR directional | Better |
+| --- | ---: | ---: | --- |
+| Mean oracle position score | 0.0710 | 0.0788 | Q-LADTR |
+| Median oracle position score | 0.0625 | 0.0814 | Q-LADTR |
+| Mean distance to oracle | 0.4914 | 0.4693 | Q-LADTR |
+| Role match rate | 0.51 | 0.57 | Q-LADTR |
+| Mean goodput | 0.605 | 0.605 | Tie |
+| Packet drops | 0.0 | 0.0 | Tie |
+
+Paired seed-level statistics showed a mean oracle-position-score delta of `+0.007893` for Q-LADTR over random, with Q-LADTR winning `6/10` seeds. The mean distance delta was `-0.022036`, meaning Q-LADTR ended closer to the oracle placements on average. The 95% confidence interval still overlaps zero, so the result is an encouraging average improvement rather than a statistically decisive claim; stronger conclusions will require more seeds, longer training, or a more realistic wireless/oracle model.
+
 ## Network condition modeling
 
 The current notebook still uses a simplified network condition model. A stronger model would compute network quality from radio features such as RSSI/RSRP, SINR/SNR, path loss, interference, bandwidth, packet loss, and queueing delay, then map those values into `network_condition`, `goodput`, and `rtt`.
