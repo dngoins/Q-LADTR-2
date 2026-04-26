@@ -35,6 +35,44 @@ plot_learning_validation_graphs(episode_df, summary_df, agent=best_agent)
 
 The generated plots cover average reward, ferry UAV distance to the ground station, network condition, goodput, RTT, buffer pressure, packet drops, directional versus random movement, Q-table scope comparisons, per-seed final rewards, and learned policy arrows.
 
+## Synthetic oracle dataset and min/max baseline
+
+The repository includes deterministic synthetic oracle data for the 10x10 grid:
+
+| File | Purpose |
+| --- | --- |
+| `data/synthetic_uav_ideal_placements.csv` | One ideal role and grid placement per UAV. The default 10-UAV layout uses a 6 search / 4 ferry ratio. |
+| `data/synthetic_uav_network_conditions.csv` | Per-UAV, per-grid-cell synthetic network condition, goodput, RTT, buffer pressure, packet drop probability, and oracle score. |
+
+Use these helpers to regenerate or benchmark against the oracle:
+
+```python
+oracle_df, ideal_placements = generate_synthetic_network_oracle(
+    num_uavs=10,
+    grid_size=10,
+    search_ratio=0.6,
+    save_prefix="synthetic_uav",
+)
+
+q_summary, q_scores, oracle_df, ideal_placements = run_oracle_benchmark(
+    seeds=(1, 2, 3),
+    num_episodes=500,
+    num_uavs=10,
+    grid_size=10,
+    search_ratio=0.6,
+)
+
+minmax_summary, minmax_rows, _, _ = run_minmax_oracle_baseline(
+    num_uavs=10,
+    grid_size=10,
+    search_ratio=0.6,
+)
+
+plot_oracle_benchmark(q_summary, minmax_summary)
+```
+
+The oracle benchmark records elapsed runtime, seconds per episode, distance to oracle placement, role match rate, network condition, goodput, RTT, buffer pressure, and packet drops. The min/max oracle baseline is intentionally simple and fast: it directly picks the highest oracle-scored grid cell per UAV. It is useful as an upper-bound or sanity-check baseline before comparing Q-LADTR with DQN, PPO, A2C, or MADDPG.
+
 ## Network condition modeling
 
 The current notebook still uses a simplified network condition model. A stronger model would compute network quality from radio features such as RSSI/RSRP, SINR/SNR, path loss, interference, bandwidth, packet loss, and queueing delay, then map those values into `network_condition`, `goodput`, and `rtt`.
@@ -52,7 +90,7 @@ Useful options:
 2. **Directional movement actions** - Implemented a comparison workflow for learned `up`, `down`, `left`, `right`, and `stay` actions against the prior random movement model using `compare_movement_strategies(...)`.
 3. **Multi-agent Q-learning** - Implemented configurable Q-table scopes with `q_table_scope="shared"`, `"per_role"`, or `"per_uav"` and `compare_q_table_scopes(...)`.
 4. **Reward shaping** - Implemented configurable reward weights plus `reward_component_totals` and `compare_reward_profiles(...)`.
-5. **Algorithm comparison** - Benchmark tabular Q-learning against DQN, PPO, A2C, and MADDPG using the same environment metrics and episode seeds.
+5. **Algorithm comparison** - Added a synthetic oracle dataset and min/max oracle baseline for timing and placement-quality comparisons. Next benchmark tabular Q-learning against DQN, PPO, A2C, and MADDPG using the same metrics and seeds.
 6. **Obstacle and no-fly-zone constraints** - Add map masks for obstacles/no-fly zones, prevent invalid transitions, and penalize policy attempts to enter restricted cells.
 7. **Realistic wireless signal model** - Replace random network condition changes with path-loss, distance, interference, and line-of-sight based signal quality.
 8. **Battery-aware routing** - Add battery level to the state, energy costs to movement/communication, and rewards for safe return or charging behavior.
