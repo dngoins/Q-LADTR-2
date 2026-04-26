@@ -17,6 +17,35 @@ Future work item 3 is implemented with configurable Q-table scopes. Set `q_table
 
 Future work item 4 is implemented with configurable reward weights and per-component reward totals. Pass `reward_weights` into `train_q_learning_agent(...)`, or run `compare_reward_profiles(...)` to compare the baseline, connectivity-focused, and drop-avoidance-focused reward profiles.
 
+## Validation graphs
+
+Use the validation helpers to generate the evidence plots for convergence and coverage:
+
+```python
+episode_df, summary_df, agents = run_validation_experiments(
+    seeds=(1, 2, 3, 4, 5),
+    num_episodes=500,
+    num_uavs=10,
+    max_steps=50,
+)
+
+best_agent = agents[(1, "directional", "shared")]
+plot_learning_validation_graphs(episode_df, summary_df, agent=best_agent)
+```
+
+The generated plots cover average reward, ferry UAV distance to the ground station, network condition, goodput, RTT, buffer pressure, packet drops, directional versus random movement, Q-table scope comparisons, per-seed final rewards, and learned policy arrows.
+
+## Network condition modeling
+
+The current notebook still uses a simplified network condition model. A stronger model would compute network quality from radio features such as RSSI/RSRP, SINR/SNR, path loss, interference, bandwidth, packet loss, and queueing delay, then map those values into `network_condition`, `goodput`, and `rtt`.
+
+Useful options:
+
+1. **Analytical model** - Use free-space or log-distance path loss, shadow fading, SINR, and Shannon capacity. This is the easiest way to make UAV distance and relay placement physically meaningful.
+2. **3GPP-inspired model** - Use 3GPP TR 36.777 or TR 38.901 style air-to-ground path-loss and line-of-sight probability models for UAV-to-ground links.
+3. **Public traces** - Use CRAWDAD wireless traces, IEEE DataPort wireless/UAV datasets, OpenCelliD cell tower locations, or WiFi RSSI datasets such as UCI Wireless Indoor Localization to calibrate RSSI/path-loss behavior.
+4. **Simulator-generated traces** - Use ns-3 with LTE/5G/WiFi modules to generate repeatable RSSI, SINR, throughput, delay, and packet loss data for controlled UAV movement scenarios.
+
 ## Future work plan
 
 1. **Spatial Q-learning with grid-based states** - Continue tuning the dictionary Q-table state key around `(grid_x, grid_y, role, network_condition, goodput, rtt, buffer)` and compare grid resolutions such as 10x10, 20x20, and adaptive cells.
