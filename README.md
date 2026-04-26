@@ -75,6 +75,22 @@ plot_oracle_grid_view(oracle_df, ideal_placements, metric="ideal_score")
 
 The oracle benchmark records elapsed runtime, seconds per episode, distance to oracle placement, role match rate, network condition, goodput, RTT, buffer pressure, and packet drops for both directional Q-LADTR and the `random_movement` baseline. The min/max oracle baseline is intentionally simple and fast: it directly picks the highest oracle-scored grid cell per UAV. It is useful as an upper-bound or sanity-check baseline before comparing Q-LADTR with DQN, PPO, A2C, or MADDPG. Use `plot_oracle_grid_view(...)` to show the oracle score heatmap with ideal search/ferry UAV placements overlaid on the grid.
 
+## Future #5 algorithm comparison
+
+The notebook includes an optional Future #5 comparison section for tabular Q-LADTR versus DQN, PPO, and A2C. Q-LADTR, `random_movement`, and `minmax_oracle` run with the existing notebook dependencies. DQN, PPO, and A2C require Stable-Baselines3 and Gymnasium:
+
+```python
+%pip install stable-baselines3 gymnasium
+```
+
+After installing those packages, set:
+
+```python
+run_deep_rl_algorithms = True
+```
+
+The Future #5 cell then combines Q-LADTR directional, random movement, min/max oracle, and optional DQN/PPO/A2C rows into one summary table and chart set using the same oracle scoring metrics. Keep `future5_total_timesteps` small while testing, then increase it for stronger deep-RL training. MADDPG is not included because Stable-Baselines3 does not provide it; adding MADDPG will require a multi-agent RL library or custom implementation.
+
 ## Network condition modeling
 
 The current notebook still uses a simplified network condition model. A stronger model would compute network quality from radio features such as RSSI/RSRP, SINR/SNR, path loss, interference, bandwidth, packet loss, and queueing delay, then map those values into `network_condition`, `goodput`, and `rtt`.
@@ -92,7 +108,7 @@ Useful options:
 2. **Directional movement actions** - Implemented a comparison workflow for learned `up`, `down`, `left`, `right`, and `stay` actions against the prior random movement model using `compare_movement_strategies(...)`.
 3. **Multi-agent Q-learning** - Implemented configurable Q-table scopes with `q_table_scope="shared"`, `"per_role"`, or `"per_uav"` and `compare_q_table_scopes(...)`.
 4. **Reward shaping** - Implemented configurable reward weights plus `reward_component_totals` and `compare_reward_profiles(...)`.
-5. **Algorithm comparison** - Added a synthetic oracle dataset and min/max oracle baseline for timing and placement-quality comparisons. Next benchmark tabular Q-learning against DQN, PPO, A2C, and MADDPG using the same metrics and seeds.
+5. **Algorithm comparison** - Added a Future #5 notebook section for comparing tabular Q-LADTR against optional DQN, PPO, and A2C Stable-Baselines3 baselines using the same oracle scoring metrics and seeds. MADDPG remains future work because it needs a multi-agent RL implementation.
 6. **Obstacle and no-fly-zone constraints** - Add map masks for obstacles/no-fly zones, prevent invalid transitions, and penalize policy attempts to enter restricted cells.
 7. **Realistic wireless signal model** - Replace random network condition changes with path-loss, distance, interference, and line-of-sight based signal quality.
 8. **Battery-aware routing** - Add battery level to the state, energy costs to movement/communication, and rewards for safe return or charging behavior.
