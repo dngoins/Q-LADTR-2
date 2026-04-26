@@ -60,6 +60,7 @@ q_summary, q_scores, oracle_df, ideal_placements = run_oracle_benchmark(
     num_uavs=10,
     grid_size=10,
     search_ratio=0.6,
+    movement_strategies=("directional", "random_movement"),
 )
 
 minmax_summary, minmax_rows, _, _ = run_minmax_oracle_baseline(
@@ -69,9 +70,10 @@ minmax_summary, minmax_rows, _, _ = run_minmax_oracle_baseline(
 )
 
 plot_oracle_benchmark(q_summary, minmax_summary)
+plot_oracle_grid_view(oracle_df, ideal_placements, metric="ideal_score")
 ```
 
-The oracle benchmark records elapsed runtime, seconds per episode, distance to oracle placement, role match rate, network condition, goodput, RTT, buffer pressure, and packet drops. The min/max oracle baseline is intentionally simple and fast: it directly picks the highest oracle-scored grid cell per UAV. It is useful as an upper-bound or sanity-check baseline before comparing Q-LADTR with DQN, PPO, A2C, or MADDPG.
+The oracle benchmark records elapsed runtime, seconds per episode, distance to oracle placement, role match rate, network condition, goodput, RTT, buffer pressure, and packet drops for both directional Q-LADTR and the `random_movement` baseline. The min/max oracle baseline is intentionally simple and fast: it directly picks the highest oracle-scored grid cell per UAV. It is useful as an upper-bound or sanity-check baseline before comparing Q-LADTR with DQN, PPO, A2C, or MADDPG. Use `plot_oracle_grid_view(...)` to show the oracle score heatmap with ideal search/ferry UAV placements overlaid on the grid.
 
 ## Network condition modeling
 
